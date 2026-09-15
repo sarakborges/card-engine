@@ -4,87 +4,71 @@ Repo: `sarakborges/card-engine`
 Branch de integração: `develop`  
 Stack: C# / .NET 8 + Godot .NET (presentation layer)
 
-## Fonte canônica e regras de trabalho
+## Fonte canônica
 
-Este `HANDOFF.md` na raiz de `develop` é a fonte canônica e persistente do contexto operacional do projeto. `ARCHITECTURE.md` é o canon das regras arquiteturais.
+- `ARCHITECTURE.md`: canon de arquitetura de código e runtime.
+- `HANDOFF.md`: estado operacional, fluxo e próximos passos.
+- `VERSION`: versão SemVer canônica.
 
-- Todo branch de trabalho nasce de `develop`.
-- Todo pull request de trabalho aponta para `develop`, nunca diretamente para `main`.
-- `main` é reservado para integração estável/release.
-- Antes de escrever, buscar HEAD/VERSION atuais e abrir os arquivos reais envolvidos.
-- Commits devem ser pequenos e coerentes; não misturar mudanças arquiteturais sem relação.
-- Todo bloco coerente de mudança deve atualizar `VERSION` segundo SemVer: patch para fix/refactor/tooling compatível; minor para feature compatível; major para mudança incompatível.
-- Depois de mudança material em código, versão, arquitetura, roadmap ou processo, atualizar este handoff.
-- Runtime error/warning reportado pelo usuário tem prioridade sobre roadmap/refactor.
-- Não declarar bug visual/gameplay resolvido sem evidência runtime quando a confirmação depender da integração Godot.
-- Comunicação e documentação devem privilegiar decisões concretas, invariants e estado atual em vez de narrativa extensa.
+Todo branch de trabalho nasce de `develop` e todo PR de trabalho aponta para `develop`, nunca diretamente para `main`.
+
+## Arquitetura adotada
+
+A arquitetura foi consolidada a partir das práticas de código úteis observadas em `mineclone/develop`, adaptadas ao domínio de uma engine de card games em C#/.NET.
+
+Princípios obrigatórios:
+
+- responsabilidade única por invariant/domain fact;
+- módulos pequenos e coesos, com dependências estreitas;
+- composição em vez de classes centrais gigantes;
+- reuso de invariants reais, não abstrações por semelhança superficial;
+- Core como único owner das regras e mutações de gameplay;
+- IDs de domínio tipados onde reduzem ambiguidade/erros;
+- catálogos autoritativos e conteúdo imutável/validado antes da partida;
+- actions como boundary único de mutação;
+- efeitos composáveis;
+- state machines explícitas para turnos/fases/interações multi-step;
+- snapshots read-only com revision para UI/AI/async;
+- RNG e ordenação determinísticos;
+- tarefas assíncronas limitadas, snapshot-based e stale-safe;
+- trabalho derivado change-driven;
+- caches somente com owner/key/invalidation/lifetime claros;
+- collections especializadas apenas quando encapsulam um invariant útil ou ganho medido;
+- performance medida no menor owner responsável, mantendo Core benchmarkável sem Godot;
+- API pública mínima e runtime mutable state encapsulado;
+- testes focados nos invariants e regressões headless.
+
+`ARCHITECTURE.md` contém as regras detalhadas de organização, componentização, reutilização, performance, estado, concorrência, erros, testes e refactoring triggers.
+
+## Estado atual
+
+`VERSION`: `0.1.1`
+
+Branch atual: `chore/initial-scaffold`  
+PR atual: `#1` -> `develop`
+
+O scaffold ainda é deliberadamente pequeno. O `Game` atual é bootstrap e não deve crescer como um god object. Conforme regras forem adicionadas, responsabilidades devem migrar para owners coesos como catálogo, deck/zones, turn/phase state, legal-action rules, effect resolver e terminal rules.
+
+## Próximos passos de código
+
+1. Introduzir `CardId` tipado e `CardCatalog` autoritativo.
+2. Fazer deck/mão/runtime referenciar IDs/instâncias, não duplicar `CardDefinition`.
+3. Validar catálogos e cross-references antes de criar uma partida.
+4. Substituir dependência de `System.Random` por PRNG estável controlado pela engine para replay de longo prazo.
+5. Adicionar revision a snapshots/actions e rejeitar decisões stale.
+6. Extrair turn/phase state e legal-action logic do `Game` conforme a complexidade aumentar.
+7. Implementar sistema de efeitos composáveis com resolução determinística.
+8. Criar event/replay log determinístico.
+9. Evoluir AI sobre snapshots/simulation state isolado.
+10. Criar batch simulation/benchmarks antes de otimizações avançadas.
+11. Integrar Godot como adapter fino depois de estabilizar os contratos do Core.
 
 ## Validação
 
-CI automático em `.github/workflows/ci.yml`:
+CI em `.github/workflows/ci.yml` executa restore, build Release e testes em PRs para `develop` e pushes relevantes. Warnings são tratados como erros.
 
-- `dotnet restore CardEngine.sln`
-- `dotnet build CardEngine.sln --configuration Release --no-restore`
-- `dotnet test CardEngine.sln --configuration Release --no-build`
+Mudanças de gameplay devem ganhar testes headless quando reproduzíveis. Mudanças de performance devem ser sustentadas por benchmark/profiling antes de introduzir caches, pooling, custom collections ou concorrência adicional.
 
-Roda em push para `develop`/`main` e em pull requests para `develop`.
+## Regra de evolução
 
-Warnings C# são tratados como erros via `Directory.Build.props`. Testes fazem parte do gate porque o core headless, determinismo, regras e IA precisam ser validáveis sem Godot.
-
-## Canon arquitetural
-
-`ARCHITECTURE.md` é a referência principal. Regras operacionais mais importantes:
-
-1. Cada fato de gameplay possui um único owner autoritativo.
-2. `CardEngine.Core` é headless e não depende de Godot, UI ou IA.
-3. UI/Godot nunca é owner de regra; apenas projeta estado e envia intenções/ações ao core.
-4. IA escolhe entre ações legais expostas pelo core; não altera estado diretamente.
-5. Aleatoriedade de gameplay é injetada, seedable e reproduzível; evitar RNG global/ambiental.
-6. Mesmo seed + mesma configuração + mesma sequência de ações deve produzir o mesmo resultado.
-7. Reutilizar invariants, state machines e primitives reais; não abstrair semelhança superficial.
-8. Definições de cartas são data-driven sempre que possível; comportamento compartilhado deve usar efeitos composáveis em vez de classes específicas por carta.
-9. Estado derivado barato deve ser calculado/cached a partir do owner, não espelhado como segunda fonte de verdade.
-10. Atualizações de apresentação e caches devem ser change-driven quando possível; evitar recomputar ou reescrever valores idênticos por frame.
-11. Trabalho pesado de IA/simulação pode rodar fora da thread de apresentação usando snapshots imutáveis; resultados assíncronos devem ser validados contra revisão/turno atual antes de aplicar.
-12. Metadados imutáveis derivados de catálogo devem ser pré-computados pelo owner no carregamento, não redescobertos em hot paths.
-13. Não trocar corretude/determinismo por performance aparente; medir antes de otimizar.
-14. Boundaries devem apontar para dentro: Core não conhece AI, Serialization, Runner ou Godot.
-15. Testes de regressão devem privilegiar regras, legalidade de ações, replay determinístico e contratos entre módulos.
-
----
-
-# Estado atual
-
-`VERSION`: `0.1.0`
-
-Branch de trabalho atual: `chore/initial-scaffold`  
-PR atual: `#1` -> `develop`
-
-Estrutura inicial:
-
-- `CardEngine.Core`: regras, estado, ações, cartas e RNG determinístico.
-- `CardEngine.AI`: `IAgent` e agentes de IA.
-- `CardEngine.Serialization`: boundary JSON/data.
-- `CardEngine.Runner`: execução headless.
-- `CardEngine.Core.Tests` e `CardEngine.AI.Tests`: testes automatizados.
-- Godot ainda não foi integrado; será uma camada externa de apresentação.
-
-## Próximos passos
-
-Se nenhum bug/runtime issue tiver prioridade:
-
-1. Definir o modelo canônico de efeitos composáveis (`damage`, `heal`, `draw`, `discard`, modifiers, conditions, targeting).
-2. Separar com clareza definição imutável de carta e estado runtime de instância quando cartas passarem a possuir estado próprio.
-3. Criar catálogo data-driven com validação na carga e IDs únicos.
-4. Formalizar event/replay log determinístico para debugging e reprodução de partidas.
-5. Evoluir agentes: greedy/heuristic antes de search/MCTS; manter todos atrás de `IAgent`.
-6. Criar simulação em lote headless para balanceamento e avaliação de IA.
-7. Integrar Godot somente depois de os contratos de core/ações/efeitos estarem estáveis o suficiente para uma adapter layer fina.
-
-## Direção de performance
-
-- simulações headless devem evitar dependência de frame/render;
-- não fazer allocations ou cópias grandes em hot paths sem necessidade demonstrada;
-- caches só quando derivados de owner autoritativo e com invalidation clara;
-- AI search deve trabalhar sobre snapshots controlados e nunca mutar a partida autoritativa em paralelo;
-- preferir atualização change-driven e batch simulation mensurável a otimizações especulativas.
+Antes de uma mudança material, ler `ARCHITECTURE.md`, abrir os arquivos reais envolvidos e identificar o owner do invariant. Se o design novo exigir alterar o canon, atualizar arquitetura, handoff e versão no mesmo bloco coerente.
