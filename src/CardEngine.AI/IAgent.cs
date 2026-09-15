@@ -5,5 +5,5 @@ namespace CardEngine.AI;
 
 public interface IAgent
 {
-    GameAction ChooseAction(GameState state, IReadOnlyList<GameAction> legalActions);
+    MatchAction ChooseAction(MatchView view, IReadOnlyList<MatchAction> legalActions);
 }

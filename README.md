@@ -1,68 +1,70 @@
-# card-engine
+# CardEngine
 
-A headless-first game engine for single-player card games against AI opponents.
+A headless, deterministic .NET platform library for building data-driven card games.
 
-## Stack
+`CardEngine` owns reusable card-game mechanics. The game that consumes the library owns its authored content, presentation and game-specific tuning.
 
-- C# / .NET 8 for the engine core and AI
-- xUnit for automated tests
-- System.Text.Json for card data
-- Godot .NET as the future presentation layer
+## Packages
 
-The core must remain independent from Godot so matches can run headlessly for testing, AI evaluation, balancing, and deterministic bug reproduction.
+- `CardEngine.Core` — match runtime, turns, heroes, hero powers, deck/hand/board/discard, card instances, card types, effects, actions, validation and deterministic RNG.
+- `CardEngine.Serialization` — optional JSON adapter for host-authored game data.
+- `CardEngine.AI` — optional AI agent contract and stock agents.
+- `CardEngine.Runner` — repository-only headless sample; not a package.
 
-## Canonical project docs
+See `PLATFORM_ARCHITECTURE.md` for the platform/consumer contract and `ARCHITECTURE.md` for the general code architecture canon.
 
-- `HANDOFF.md`: current operational context, workflow, validation rules and roadmap
-- `ARCHITECTURE.md`: architectural invariants and new-feature checklist
-- `VERSION`: canonical engine/application version
+## Host-authored game data
 
-Read the handoff and architecture canon before material changes.
+The library does not contain specific heroes or cards. A consuming project can supply them from any source. The optional JSON adapter accepts data shaped like:
 
-## Repository structure
-
-```text
-src/
-  CardEngine.Core/           Rules, state, actions, cards, deterministic RNG
-  CardEngine.AI/             Agent abstractions and AI implementations
-  CardEngine.Serialization/  JSON card-data boundary
-  CardEngine.Runner/         Headless sample match runner
-tests/
-  CardEngine.Core.Tests/
-  CardEngine.AI.Tests/
+```json
+{
+  "rules": {
+    "startingHandSize": 3,
+    "maximumHandSize": 10,
+    "maximumBoardSize": 7,
+    "maximumTurns": 100
+  },
+  "cardTypes": [
+    { "id": "spell", "destinationAfterPlay": "discardPile" },
+    { "id": "unit", "destinationAfterPlay": "board" }
+  ],
+  "cards": [
+    {
+      "id": "strike",
+      "typeId": "spell",
+      "effects": [{ "type": "damageOpponentHero", "amount": 3 }]
+    }
+  ],
+  "heroPowers": [
+    {
+      "id": "ping",
+      "usesPerTurn": 1,
+      "effects": [{ "type": "damageOpponentHero", "amount": 1 }]
+    }
+  ],
+  "heroes": [
+    { "id": "starter", "startingHealth": 20, "heroPowerId": "ping" }
+  ]
+}
 ```
 
-## Branching
+The host then creates a match by referencing definitions by ID:
 
-- `main`: release/stable branch
-- `develop`: integration branch
-- all work branches are created from `develop`
-- all pull requests from work branches target `develop`
+```csharp
+var data = GameDataSerializer.Deserialize(json);
+var setup = new MatchSetup(
+    [
+        new PlayerSetup(new HeroId("starter"), playerDeck),
+        new PlayerSetup(new HeroId("starter"), aiDeck),
+    ],
+    data.Rules);
 
-## Core engineering rules
-
-- one authoritative owner for each gameplay fact
-- all gameplay mutation goes through the canonical Core rule/action path
-- same config + seed + ordered actions must produce the same result
-- AI chooses actions but never mutates the live match directly
-- Godot is presentation only and never owns gameplay rules
-- authored card content should be immutable/data-driven where possible
-- reuse real invariants and primitives instead of copying rule logic
-- prefer change-driven derived work and explicit invalidation over mirrored state
-- validate asynchronous AI results against the state/turn revision they were computed from
-- keep commits coherent, bump `VERSION`, and update `HANDOFF.md` after material changes
-
-See `ARCHITECTURE.md` for the complete canon.
-
-## Commands
-
-```bash
-dotnet restore CardEngine.sln
-dotnet build CardEngine.sln --no-restore
-dotnet test CardEngine.sln --no-build
-dotnet run --project src/CardEngine.Runner/CardEngine.Runner.csproj
+var match = Match.Create(data.Content, setup, seed: 483729);
 ```
 
-## Initial vertical slice
+UI and AI submit actions from `GetLegalActions()`. Only the match runtime mutates authoritative state.
 
-The first slice provides a deterministic two-player card battle loop, legal actions, seeded deck shuffling, a random AI agent, a headless runner, JSON card serialization, and tests. It is intentionally small so rules and effect systems can evolve without coupling to presentation code.
+## Development flow
+
+Work branches start from `develop` and pull requests target `develop`.

@@ -1,74 +1,80 @@
 # HANDOFF — card-engine
 
 Repo: `sarakborges/card-engine`  
-Branch de integração: `develop`  
-Stack: C# / .NET 8 + Godot .NET (presentation layer)
+Integration branch: `develop`  
+Stack: C# / .NET 8; Godot is a future consuming presentation layer
 
-## Fonte canônica
+## Product direction
 
-- `ARCHITECTURE.md`: canon de arquitetura de código e runtime.
-- `HANDOFF.md`: estado operacional, fluxo e próximos passos.
-- `VERSION`: versão SemVer canônica.
+`card-engine` is a reusable library/platform for deterministic card games, not a specific game.
 
-Todo branch de trabalho nasce de `develop` e todo PR de trabalho aponta para `develop`, nunca diretamente para `main`.
+The library owns card-game mechanics and runtime invariants. Consuming projects own authored content and presentation. Heroes, hero powers, cards, card-type definitions, decks and tuning/ruleset values are supplied by the host project as data and validated before a match starts.
 
-## Arquitetura adotada
+Canonical platform contract: `PLATFORM_ARCHITECTURE.md`.  
+Canonical code/engineering rules: `ARCHITECTURE.md`.
 
-A arquitetura foi consolidada a partir das práticas de código úteis observadas em `mineclone/develop`, adaptadas ao domínio de uma engine de card games em C#/.NET.
+## Package boundaries
 
-Princípios obrigatórios:
+- `CardEngine.Core`: required reusable platform package.
+- `CardEngine.Serialization`: optional JSON data adapter.
+- `CardEngine.AI`: optional AI package.
+- `CardEngine.Runner`: repository-only headless example.
 
-- responsabilidade única por invariant/domain fact;
-- módulos pequenos e coesos, com dependências estreitas;
-- composição em vez de classes centrais gigantes;
-- reuso de invariants reais, não abstrações por semelhança superficial;
-- Core como único owner das regras e mutações de gameplay;
-- IDs de domínio tipados onde reduzem ambiguidade/erros;
-- catálogos autoritativos e conteúdo imutável/validado antes da partida;
-- actions como boundary único de mutação;
-- efeitos composáveis;
-- state machines explícitas para turnos/fases/interações multi-step;
-- snapshots read-only com revision para UI/AI/async;
-- RNG e ordenação determinísticos;
-- tarefas assíncronas limitadas, snapshot-based e stale-safe;
-- trabalho derivado change-driven;
-- caches somente com owner/key/invalidation/lifetime claros;
-- collections especializadas apenas quando encapsulam um invariant útil ou ganho medido;
-- performance medida no menor owner responsável, mantendo Core benchmarkável sem Godot;
-- API pública mínima e runtime mutable state encapsulado;
-- testes focados nos invariants e regressões headless.
+Core must not depend on AI, Serialization, Runner, Godot, UI or a specific card game.
 
-`ARCHITECTURE.md` contém as regras detalhadas de organização, componentização, reutilização, performance, estado, concorrência, erros, testes e refactoring triggers.
+## Current platform model
 
-## Estado atual
+The platform now models:
 
-`VERSION`: `0.1.1`
+- typed IDs for cards, card types, heroes and hero powers;
+- deterministic per-match `CardInstanceId` values;
+- immutable validated `GameContent` catalogs;
+- host-provided `MatchRules` and `MatchSetup`;
+- two-player authoritative matches;
+- hero health and data-driven hero-power references;
+- deck, hand, board and discard zones;
+- data-driven card types that determine post-play destination;
+- composable effect definitions with initial damage/heal primitives;
+- legal actions for card play, hero power and end turn;
+- revision-checked mutation to reject stale decisions;
+- immutable `MatchState` snapshots;
+- player-scoped `MatchView` that hides opponent hand contents;
+- deterministic library-owned RNG;
+- JSON game-data adapter;
+- optional AI agents over the player-view/action boundary.
 
-Branch atual: `chore/initial-scaffold`  
-PR atual: `#1` -> `develop`
+## Next platform work
 
-O scaffold ainda é deliberadamente pequeno. O `Game` atual é bootstrap e não deve crescer como um god object. Conforme regras forem adicionadas, responsabilidades devem migrar para owners coesos como catálogo, deck/zones, turn/phase state, legal-action rules, effect resolver e terminal rules.
+Prioritize primitives required by the first consuming game rather than speculative generality. Expected next candidates:
 
-## Próximos passos de código
+1. target model and target legality;
+2. draw/discard/summon/destroy effects;
+3. per-instance card state;
+4. status/modifier model;
+5. generic resource/cost mechanics;
+6. explicit turn phases;
+7. deterministic event/replay log;
+8. victory/terminal policy extension;
+9. batch simulation and AI search snapshots.
 
-1. Introduzir `CardId` tipado e `CardCatalog` autoritativo.
-2. Fazer deck/mão/runtime referenciar IDs/instâncias, não duplicar `CardDefinition`.
-3. Validar catálogos e cross-references antes de criar uma partida.
-4. Substituir dependência de `System.Random` por PRNG estável controlado pela engine para replay de longo prazo.
-5. Adicionar revision a snapshots/actions e rejeitar decisões stale.
-6. Extrair turn/phase state e legal-action logic do `Game` conforme a complexidade aumentar.
-7. Implementar sistema de efeitos composáveis com resolução determinística.
-8. Criar event/replay log determinístico.
-9. Evoluir AI sobre snapshots/simulation state isolado.
-10. Criar batch simulation/benchmarks antes de otimizações avançadas.
-11. Integrar Godot como adapter fino depois de estabilizar os contratos do Core.
+## Development rules
 
-## Validação
+- Work branches originate from `develop`.
+- Pull requests target `develop`.
+- One authoritative owner per gameplay fact.
+- Consumer customization is data-first; do not expose writable runtime collections.
+- Reuse invariants, not superficial code similarity.
+- Core remains headless and framework-free.
+- Gameplay randomness and ordering remain deterministic.
+- Background AI/search uses immutable/task-owned state and revision validation.
+- Performance optimization is driven by measured headless simulation costs.
+- Tests protect content validation, zone semantics, legal actions, deterministic replay and hidden-information boundaries.
 
-CI em `.github/workflows/ci.yml` executa restore, build Release e testes em PRs para `develop` e pushes relevantes. Warnings são tratados como erros.
+## Validation
 
-Mudanças de gameplay devem ganhar testes headless quando reproduzíveis. Mudanças de performance devem ser sustentadas por benchmark/profiling antes de introduzir caches, pooling, custom collections ou concorrência adicional.
+CI restores, builds and tests the full .NET 8 solution. Warnings are errors.
 
-## Regra de evolução
+`VERSION`: `0.2.0`
 
-Antes de uma mudança material, ler `ARCHITECTURE.md`, abrir os arquivos reais envolvidos e identificar o owner do invariant. Se o design novo exigir alterar o canon, atualizar arquitetura, handoff e versão no mesmo bloco coerente.
+Current work branch: `chore/initial-scaffold`  
+Current PR: `#1` -> `develop`

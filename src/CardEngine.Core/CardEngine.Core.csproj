@@ -1,5 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <RootNamespace>CardEngine.Core</RootNamespace>
+    <IsPackable>true</IsPackable>
+    <PackageId>CardEngine.Core</PackageId>
+    <Description>Headless, deterministic platform primitives for data-driven card games.</Description>
   </PropertyGroup>
 </Project>

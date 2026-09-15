@@ -1,20 +1,21 @@
 using CardEngine.Core.Actions;
+using CardEngine.Core.Random;
 using CardEngine.Core.State;
 
 namespace CardEngine.AI;
 
-public sealed class RandomAgent(int seed) : IAgent
+public sealed class RandomAgent(ulong seed) : IAgent
 {
-    private readonly System.Random _random = new(seed);
+    private readonly IRandomSource _random = new DeterministicRandomSource(seed);
 
-    public GameAction ChooseAction(GameState state, IReadOnlyList<GameAction> legalActions)
+    public MatchAction ChooseAction(MatchView view, IReadOnlyList<MatchAction> legalActions)
     {
-        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(view);
         ArgumentNullException.ThrowIfNull(legalActions);
 
         if (legalActions.Count == 0)
         {
-            throw new InvalidOperationException("The agent cannot choose an action when none are legal.");
+            throw new InvalidOperationException("The agent cannot choose from an empty action list.");
         }
 
         return legalActions[_random.Next(legalActions.Count)];

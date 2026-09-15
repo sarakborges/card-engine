@@ -1,3 +1,4 @@
+using CardEngine.AI;
 using CardEngine.Core.Actions;
 using CardEngine.Core.State;
 
@@ -8,13 +9,13 @@ public sealed class RandomAgentTests
     [Fact]
     public void Equal_seeds_choose_the_same_action()
     {
-        var state = new GameState([], 0, 1, false, null);
-        GameAction[] actions = [new PassAction(), new PlayCardAction("strike", 1)];
+        var view = new MatchView(1, 1, 0, false, null, 0, []);
+        MatchAction[] actions = [new EndTurnAction(), new UseHeroPowerAction()];
         var first = new RandomAgent(123);
         var second = new RandomAgent(123);
 
         Assert.Equal(
-            first.ChooseAction(state, actions),
-            second.ChooseAction(state, actions));
+            first.ChooseAction(view, actions),
+            second.ChooseAction(view, actions));
     }
 }
