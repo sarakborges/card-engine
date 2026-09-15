@@ -9,4 +9,9 @@
     <ProjectReference Include="../CardEngine.AI/CardEngine.AI.csproj" />
     <ProjectReference Include="../CardEngine.Serialization/CardEngine.Serialization.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Content/**/*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>
