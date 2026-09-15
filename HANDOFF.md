@@ -40,8 +40,35 @@ The platform now models:
 - immutable `MatchState` snapshots;
 - player-scoped `MatchView` that hides opponent hand contents;
 - deterministic library-owned RNG;
-- JSON game-data adapter;
 - optional AI agents over the player-view/action boundary.
+
+## JSON content layout
+
+`CardEngine.Serialization` uses a per-entity filesystem layout. A consuming project chooses the content root (recommended: `data/`) and loads it with `GameDataDirectoryLoader.Load(root)`.
+
+Canonical layout:
+
+```text
+data/
+  rules.json
+  card-types/
+    {id}.json
+  cards/
+    {id}.json
+  heroes/
+    {id}.json
+  hero-powers/
+    {id}.json
+```
+
+Rules:
+
+- each entity JSON contains exactly one definition;
+- the entity ID remains explicit inside the JSON;
+- `{id}.json` must match the declared `id` exactly using ordinal comparison;
+- files are loaded in deterministic ordinal filename order;
+- cross-reference validation happens only after all definitions are composed into `GameContent`;
+- Core remains unaware of filesystem and JSON concerns.
 
 ## Next platform work
 
@@ -74,7 +101,7 @@ Prioritize primitives required by the first consuming game rather than speculati
 
 CI restores, builds and tests the full .NET 8 solution. Warnings are errors.
 
-`VERSION`: `0.2.0`
+`VERSION`: `0.2.1`
 
 Current work branch: `chore/initial-scaffold`  
 Current PR: `#1` -> `develop`
