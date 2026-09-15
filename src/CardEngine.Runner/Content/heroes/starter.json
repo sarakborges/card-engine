@@ -1,0 +1,5 @@
+{
+  "id": "starter",
+  "startingHealth": 20,
+  "heroPowerId": "ping"
+}

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>CardEngine.AI</RootNamespace>
+    <IsPackable>true</IsPackable>
+    <PackageId>CardEngine.AI</PackageId>
+    <Description>Optional AI agent contracts and implementations for CardEngine.Core.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../CardEngine.Core/CardEngine.Core.csproj" />
+  </ItemGroup>
+</Project>

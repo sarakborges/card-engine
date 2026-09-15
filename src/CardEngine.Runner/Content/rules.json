@@ -1,0 +1,6 @@
+{
+  "startingHandSize": 3,
+  "maximumHandSize": 10,
+  "maximumBoardSize": 7,
+  "maximumTurns": 30
+}

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>CardEngine.Serialization</RootNamespace>
+    <IsPackable>true</IsPackable>
+    <PackageId>CardEngine.Serialization</PackageId>
+    <Description>JSON data adapters for CardEngine.Core content and rules.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../CardEngine.Core/CardEngine.Core.csproj" />
+  </ItemGroup>
+</Project>

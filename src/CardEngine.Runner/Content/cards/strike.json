@@ -1,0 +1,10 @@
+{
+  "id": "strike",
+  "typeId": "spell",
+  "effects": [
+    {
+      "type": "damageOpponentHero",
+      "amount": 3
+    }
+  ]
+}

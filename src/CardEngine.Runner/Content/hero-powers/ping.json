@@ -1,0 +1,10 @@
+{
+  "id": "ping",
+  "usesPerTurn": 1,
+  "effects": [
+    {
+      "type": "damageOpponentHero",
+      "amount": 1
+    }
+  ]
+}
