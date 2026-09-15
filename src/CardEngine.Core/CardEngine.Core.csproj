@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>CardEngine.Core</RootNamespace>
+  </PropertyGroup>
+</Project>

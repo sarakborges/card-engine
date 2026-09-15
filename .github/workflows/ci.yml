@@ -1,0 +1,20 @@
+name: ci
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - run: dotnet restore CardEngine.sln
+      - run: dotnet build CardEngine.sln --configuration Release --no-restore
+      - run: dotnet test CardEngine.sln --configuration Release --no-build --verbosity normal

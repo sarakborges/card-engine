@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../CardEngine.Core/CardEngine.Core.csproj" />
+    <ProjectReference Include="../CardEngine.AI/CardEngine.AI.csproj" />
+  </ItemGroup>
+</Project>
