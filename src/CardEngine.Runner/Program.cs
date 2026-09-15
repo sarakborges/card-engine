@@ -1,47 +1,12 @@
 using CardEngine.AI;
+using CardEngine.Core.Content;
 using CardEngine.Core.Match;
 using CardEngine.Serialization;
 
-const string gameDataJson = """
-{
-  "rules": {
-    "startingHandSize": 3,
-    "maximumHandSize": 10,
-    "maximumBoardSize": 7,
-    "maximumTurns": 30
-  },
-  "cardTypes": [
-    { "id": "spell", "destinationAfterPlay": "discardPile" },
-    { "id": "unit", "destinationAfterPlay": "board" }
-  ],
-  "cards": [
-    {
-      "id": "strike",
-      "typeId": "spell",
-      "effects": [{ "type": "damageOpponentHero", "amount": 3 }]
-    },
-    {
-      "id": "guard",
-      "typeId": "unit",
-      "effects": []
-    }
-  ],
-  "heroPowers": [
-    {
-      "id": "ping",
-      "usesPerTurn": 1,
-      "effects": [{ "type": "damageOpponentHero", "amount": 1 }]
-    }
-  ],
-  "heroes": [
-    { "id": "starter", "startingHealth": 20, "heroPowerId": "ping" }
-  ]
-}
-""";
-
-var data = GameDataSerializer.Deserialize(gameDataJson);
+var data = GameDataDirectoryLoader.Load(
+    Path.Combine(AppContext.BaseDirectory, "Content"));
 var deck = Enumerable.Range(0, 10)
-    .Select(index => new CardEngine.Core.Content.CardId(index % 3 == 0 ? "guard" : "strike"))
+    .Select(index => new CardId(index % 3 == 0 ? "guard" : "strike"))
     .ToArray();
 var setup = new MatchSetup(
     [
