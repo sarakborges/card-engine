@@ -50,6 +50,29 @@ A consuming project may create `GameContent` from JSON, a database, Godot resour
 
 `CardEngine.Serialization` is an optional JSON adapter, not the owner of content semantics.
 
+### JSON filesystem convention
+
+For filesystem-backed JSON content, use one definition per file. The recommended root in a consuming project is `data/`:
+
+```text
+data/
+  rules.json
+  card-types/
+    {id}.json
+  cards/
+    {id}.json
+  heroes/
+    {id}.json
+  hero-powers/
+    {id}.json
+```
+
+Each entity document contains one definition, never an aggregate array of all entities. The `id` is explicit inside the JSON and the filename stem must match that ID exactly. For example, `data/heroes/mage.json` must declare `"id": "mage"`.
+
+`GameDataDirectoryLoader` is responsible only for filesystem enumeration, deterministic filename ordering and composition. Domain-specific serializers parse one definition at a time. `GameContent.Create` remains responsible for global uniqueness and cross-reference validation.
+
+The filesystem layout is an adapter concern. Core remains unaware of paths, files and JSON.
+
 ## Definitions vs instances
 
 A card definition describes authored behavior. A card instance represents one concrete copy inside a match.
@@ -132,7 +155,7 @@ Match randomness is provided by a library-owned deterministic algorithm, not `Sy
 
 Same content + setup + seed + ordered actions must produce the same authoritative result for a given engine version.
 
-Candidate ordering must be explicit whenever ordering influences a random or rule outcome.
+Candidate ordering must be explicit whenever ordering influences a random or rule outcome. JSON definition files are enumerated in ordinal filename order before catalog construction.
 
 ## Package boundaries
 
