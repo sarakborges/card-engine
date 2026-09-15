@@ -1,20 +1,37 @@
-name: ci
+name: .NET validation
 
 on:
-  push:
-    branches: [develop]
   pull_request:
-    branches: [develop]
+    branches:
+      - develop
+  push:
+    branches:
+      - develop
+      - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  build-and-test:
+  validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-      - run: dotnet restore CardEngine.sln
-      - run: dotnet build CardEngine.sln --configuration Release --no-restore
-      - run: dotnet test CardEngine.sln --configuration Release --no-build --verbosity normal
+
+      - name: Restore
+        run: dotnet restore CardEngine.sln
+
+      - name: Build
+        run: dotnet build CardEngine.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test CardEngine.sln --configuration Release --no-build --verbosity normal
