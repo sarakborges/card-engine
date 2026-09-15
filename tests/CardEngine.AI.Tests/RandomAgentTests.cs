@@ -1,6 +1,7 @@
 using CardEngine.AI;
 using CardEngine.Core.Actions;
 using CardEngine.Core.State;
+using Xunit;
 
 namespace CardEngine.AI.Tests;
 

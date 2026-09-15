@@ -2,6 +2,7 @@ using CardEngine.Core.Actions;
 using CardEngine.Core.Content;
 using CardEngine.Core.Effects;
 using CardEngine.Core.Match;
+using Xunit;
 
 namespace CardEngine.Core.Tests;
 
