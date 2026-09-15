@@ -29,19 +29,23 @@ public static class GameDataDirectoryLoader
         var cardTypes = LoadDefinitions(
             root,
             GameDataDirectoryLayout.CardTypesDirectoryName,
-            CardTypeJsonSerializer.Deserialize);
+            CardTypeJsonSerializer.Deserialize,
+            definition => definition.Id.Value);
         var cards = LoadDefinitions(
             root,
             GameDataDirectoryLayout.CardsDirectoryName,
-            CardJsonSerializer.Deserialize);
+            CardJsonSerializer.Deserialize,
+            definition => definition.Id.Value);
         var heroes = LoadDefinitions(
             root,
             GameDataDirectoryLayout.HeroesDirectoryName,
-            HeroJsonSerializer.Deserialize);
+            HeroJsonSerializer.Deserialize,
+            definition => definition.Id.Value);
         var heroPowers = LoadDefinitions(
             root,
             GameDataDirectoryLayout.HeroPowersDirectoryName,
-            HeroPowerJsonSerializer.Deserialize);
+            HeroPowerJsonSerializer.Deserialize,
+            definition => definition.Id.Value);
 
         var content = GameContent.Create(cardTypes, cards, heroes, heroPowers);
         return new GameData(content, rules);
@@ -60,7 +64,8 @@ public static class GameDataDirectoryLoader
     private static IReadOnlyList<T> LoadDefinitions<T>(
         string root,
         string directoryName,
-        Func<string, T> deserialize)
+        Func<string, T> deserialize,
+        Func<T, string> idSelector)
     {
         var directory = Path.Combine(root, directoryName);
         if (!Directory.Exists(directory))
@@ -75,10 +80,23 @@ public static class GameDataDirectoryLoader
         var definitions = new T[paths.Length];
         for (var index = 0; index < paths.Length; index++)
         {
-            definitions[index] = DeserializeFile(paths[index], deserialize);
+            var path = paths[index];
+            var definition = DeserializeFile(path, deserialize);
+            ValidateFileNameMatchesId(path, idSelector(definition));
+            definitions[index] = definition;
         }
 
         return definitions;
+    }
+
+    private static void ValidateFileNameMatchesId(string path, string id)
+    {
+        var fileId = Path.GetFileNameWithoutExtension(path);
+        if (!string.Equals(fileId, id, StringComparison.Ordinal))
+        {
+            throw new InvalidDataException(
+                $"Game content file '{path}' declares id '{id}', but its filename must be '{id}.json'.");
+        }
     }
 
     private static T DeserializeFile<T>(string path, Func<string, T> deserialize)
